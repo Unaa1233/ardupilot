@@ -1118,6 +1118,7 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @Values: 0:NotEnforced,1:Enforced
     // @User: Advanced
     AP_GROUPINFO("SYSID_ENFORCE", 4, ParametersG2, sysid_enforce, 0),
+    AP_GROUPINFO("STAR_MY", 28, ParametersG2, star_my, 3),
 #if STATS_ENABLED == ENABLED
     // @Group: STAT
     // @Path: ../libraries/AP_Stats/AP_Stats.cpp
@@ -1229,6 +1230,7 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @Bitmask: 0:pitch control, 1:full span, 2:Progressive crow
     // @User: Advanced
     AP_GROUPINFO("DSPOILER_OPTS", 20, ParametersG2, crow_flap_options, 3),
+      
 
     // @Param: DSPOILER_AILMTCH
     // @DisplayName: Differential spoiler aileron matching
@@ -1270,7 +1272,7 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @Increment: 1
     // @User: Standard
     AP_GROUPINFO("RTL_CLIMB_MIN", 27, ParametersG2, rtl_climb_min, 0),
-
+    
     AP_GROUPEND
 };
 
