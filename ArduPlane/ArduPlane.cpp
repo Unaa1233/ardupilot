@@ -291,6 +291,12 @@ void Plane::one_second_loop()
             // reset the landing altitude correction
             landing.alt_offset = 0;
     }
+
+    gcs().send_text(MAV_SEVERITY_CRITICAL,
+        "Current altitude: %.1fm",
+        relative_ground_altitude(false));
+
+
 }
 
 void Plane::compass_save()
