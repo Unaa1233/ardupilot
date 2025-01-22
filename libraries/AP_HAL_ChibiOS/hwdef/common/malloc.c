@@ -572,7 +572,7 @@ void *__wrap__calloc_r(void *rptr, size_t nmemb, size_t size)
     return calloc(nmemb, size);
 }
 
-void *__wrap__malloc_r(void *rptr, size_t size)
+__attribute__((weak))void *__wrap__malloc_r(void *rptr, size_t size) // 增加了__attribute__((weak))
 {
     (void)rptr;
     // we want consistent zero memory
