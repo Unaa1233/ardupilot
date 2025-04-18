@@ -1,5 +1,9 @@
 #include "Plane.h"
-
+//<--开发
+#include <AP_L1_Control/AP_L1_Control.h>
+// 在 Log.cpp 中
+#define LOG_DEBUG
+//开发-->
 #if HAL_LOGGING_ENABLED
 
 // Write an attitude packet
@@ -121,6 +125,38 @@ void Plane::Log_Write_Control_Tuning()
     logger.WriteBlock(&pkt, sizeof(pkt));
 }
 
+
+//<--开发
+//比例导引日志相关
+    struct PACKED log_PNL1 {
+        LOG_PACKET_HEADER;
+        uint64_t time_us;
+        double d_Q_1;//此处将long double改为了double，注意！！
+        double d_Q_2;
+        double d_Q_3;
+        double d_d_Q;
+        double d_d_Q_1;
+        float latAccDem;
+        float latAccDem1;
+};
+
+void Plane::Log_Write_PNL1()
+{
+    struct log_PNL1 pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_PNL1_MSG),
+        time_us          : AP_HAL::micros64(),
+        d_Q_1            : plane.L1_controller._d_Q_1,
+        d_Q_2            : plane.L1_controller._d_Q_2,
+        d_Q_3            : plane.L1_controller._d_Q_3,
+        d_d_Q            : plane.L1_controller._d_d_Q,
+        d_d_Q_1          : plane.L1_controller._d_d_Q_1,
+        latAccDem        : plane.L1_controller._latAccDem,
+        latAccDem1       : plane.L1_controller._latAccDem1
+    };
+    logger.WriteCriticalBlock(&pkt, sizeof(pkt));
+}
+
+//开发-->
 #if OFFBOARD_GUIDED == ENABLED
 struct PACKED log_OFG_Guided {
     LOG_PACKET_HEADER;
@@ -323,6 +359,15 @@ const struct LogStructure Plane::log_structure[] = {
     { LOG_CTUN_MSG, sizeof(log_Control_Tuning),     
       "CTUN", "QccccffffBffi",    "TimeUS,NavRoll,Roll,NavPitch,Pitch,ThO,RdO,ThD,As,AsT,SAs,E2T,GU", "sdddd---n-n-n", "FBBBB---000-B" , true },
 
+
+      //<--开发
+//比例导引
+
+    { LOG_PNL1_MSG, sizeof(log_PNL1),
+      "PNL1", "Qdddddff",         "TimeUS,d_Q_1,d_Q_2,d_Q_3,d_d_Q,d_d_Q_1,latAccDem,latAccDem1","s-------","F-------", true },
+      //开发-->
+
+
 // @LoggerMessage: NTUN
 // @Description: Navigation Tuning information - e.g. vehicle destination
 // @Field: TimeUS: Time since system startup
@@ -340,6 +385,7 @@ const struct LogStructure Plane::log_structure[] = {
 // @Field: TAsp: target airspeed
     { LOG_NTUN_MSG, sizeof(log_Nav_Tuning),         
       "NTUN", "QfcccfffLLeee",  "TimeUS,Dist,TBrg,NavBrg,AltE,XT,XTi,AsE,TLat,TLng,TAW,TAT,TAsp", "smddmmmnDUmmn", "F0BBB0B0GG000" , true },
+
 
 // @LoggerMessage: ATRP
 // @Description: Plane AutoTune

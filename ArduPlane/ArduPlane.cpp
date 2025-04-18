@@ -54,12 +54,18 @@ FAST_TASK entries are run on every loop even if that means the loop
 overruns its allotted time
  */
 const AP_Scheduler::Task Plane::scheduler_tasks[] = {
-                           // Units:   Hz      us
+                           // Units:   Hz      us   优先级
     FAST_TASK(ahrs_update),
     FAST_TASK(update_control_mode),
     FAST_TASK(stabilize),
     FAST_TASK(set_servos),
+    //<--开发代码
+    SCHED_TASK(data_send,      1,    400,   5),
+    //开发代码-->
     SCHED_TASK(read_radio,             50,    100,   6),
+    //<--开发代码
+    SCHED_TASK(Throwwater,   100,    400,   7),
+    //开发代码-->
     SCHED_TASK(check_short_failsafe,   50,    100,   9),
     SCHED_TASK(update_speed_height,    50,    200,  12),
     SCHED_TASK(update_throttle_hover, 100,     90,  24),
@@ -966,6 +972,111 @@ bool Plane::flight_option_enabled(FlightOptions flight_option) const
 {
     return g2.flight_options & flight_option;
 }
+
+//<--开发
+
+//发送飞机的任务状态信息：是否切航线（ttarget_ready）(由机载电脑发消息确定)，是否投水(ThroworNot)（由检测舵机状态确定）
+void Plane::data_send()
+{       //注意将这个地方树莓派里发的yaw值改为1
+    if (plane.ttarget_ready == 1)     //ttarg_ready为初始化是0，ttarg_ready是一个标志量，标志着飞机是否切换到投水航线，当飞机切到投水航线，机载电脑就会借载体yaw（值为1）（随便找的）发送给飞控，飞控用ttarg_ready接收
+    {
+        gcs().send_text(MAV_SEVERITY_INFO, "target_GPS has been ready");
+        gcs().send_text(MAV_SEVERITY_INFO, "target_GPS's lat=%ld", plane.ttarget_show.lat);//仿真时是%d，
+        gcs().send_text(MAV_SEVERITY_INFO, "target_GPS's lng=%ld", plane.ttarget_show.lng);
+    }//偏航角(从机载电脑mavros传入的一个参量)为0，（随便在树莓派的mavros找了一个参数（即偏航角）发送给了飞控），飞机侦察到目标靶点，发送飞机测得的靶标坐标
+ 
+    if (plane.ThroworNot == 1)
+    {
+        gcs().send_text(MAV_SEVERITY_INFO, "Water has been throw!!!");
+        gcs().send_text(MAV_SEVERITY_INFO, "Water has been throw!!!");
+        gcs().send_text(MAV_SEVERITY_INFO, "Water has been throw!!!");
+    }//参数为1时表示投水，通过ThroworNot的值来显示投水信息
+}
+
+
+
+
+/*throwwater参数，
+    为1时强制投水，不管有没有判断，
+    为2时当测试用，从地面站参数表直接读取靶点gps（不是通过树莓派），且中位启动，不需要树莓派准备好（ready）就能进行投水，
+    为0时是正常的比赛方案，从树莓派读取靶点gps信息，进行后续投水，
+    为3时除了获取gps方式不同（从地面站g2参数表直接获取），其它和比赛方案（0）完全一致，又称线上比赛方案
+*/
+void Plane::Throwwater()
+{
+    //当为测试投水和表演投水时，直接利用人为测得的靶标坐标进行投水，实际比赛时则用飞机测得的坐标投水
+    //_show为实际侦察出的坐标，用于展示侦察效果
+    if (g2.throwwater == 2 || g2.throwwater == 3)
+    {
+        plane.ttarget.lat = g2.throwwater_target_lat;
+        plane.ttarget.lng = g2.throwwater_target_lng;//人工测的坐标
+    }
+    else
+    {
+        plane.ttarget.lat = plane.ttarget_show.lat;
+        plane.ttarget.lng = plane.ttarget_show.lng;
+    }
+
+
+
+    //通过检测与控制舵机状态，检查投水情况
+        //1200以下为低位，为不投水的模式，1200-1800为中位即切自动投水模式，大于1800为高位为手动投水
+    if (RC_Channels::get_radio_in(6) < 1200)//七通投水，数组从0开始，故而7通为（6）
+    {
+        SRV_Channels::set_output_pwm_chan(6, 1000);
+        plane.ThroworNot = 0;
+        plane.tdistance_cur = 500.0;
+    }
+    else if (RC_Channels::get_radio_in(6) > 1800)//“二值化”，保证稳定投水
+    {
+        SRV_Channels::set_output_pwm_chan(6, 2100);
+        plane.ThroworNot = 1;
+    }
+    //强制投水
+    else if (g2.throwwater == 1)
+    {
+        SRV_Channels::set_output_pwm_chan(6, 2100);
+        plane.ThroworNot = 1;
+        SRV_Channels::set_output_pwm_chan(7, 2100);//为何要把八通也置为高位？八通是投水舵机。
+    }
+    //2025.1.23记录
+    else if (plane.ttarget_ready == 1 || g2.throwwater == 2)//中位与自动
+    {
+        //靶标的位置信息
+        Vector2f distance_current2target = plane.current_loc.get_distance_NE(plane.ttarget);//以飞机为参考系，预计落点位置的坐标向量in meters//北东坐标(北方东方为正)
+        //Vector3f tvel;
+        //plane.ahrs.get_velocity_NED(tvel);
+        float high = (plane.relative_ground_altitude(false) > 0) ? plane.relative_ground_altitude(false) : 0;//返回飞机当前高度，如果高度为0或负数则返回0，防止对负数开根号
+        plane.drop_time = (sqrtf(2 * high * 9.8015f + gps.velocity().z * gps.velocity().z) - gps.velocity().z) / 9.8015f;//计算投放掉落时间   
+        //计算投水后水瓶的掉落位置（x,y）  （落点）
+        Vector2f distance_current2drop;  //以飞机为参考系，预计落点位置的坐标向量，in meters 
+        distance_current2drop.x = (drop_time + g2.throwwater_delay) * gps.velocity().x;
+        distance_current2drop.y = (drop_time + g2.throwwater_delay) * gps.velocity().y;
+        //计算位置误差，hypotf（x，y）即计算sqrt（x*x+y*y）
+        plane.tdistance_cur = hypotf(distance_current2target.x - distance_current2drop.x, distance_current2target.y - distance_current2drop.y);
+        //在误差小于设定值并且飞机以及错过最佳投水时机
+        if (plane.tdistance_cur<g2.throwwater_judging_radius && plane.tdistance_cur>plane.last_distance)//此刻的误差比上一刻误差大，上一时刻的误差初始化为500
+        {
+            SRV_Channels::set_output_pwm_chan(6, 2100);
+            plane.ThroworNot = 1;
+            SRV_Channels::set_output_pwm_chan(7, 2100);//投水
+        }
+        plane.last_distance = plane.tdistance_cur;//该程序反复执行，故而更新上一时刻的误差，比较此刻与上一时刻的误差
+
+        if (g2.throwwater_record == 0 && plane.tdistance_cur < 20)
+        {
+            gcs().send_text(MAV_SEVERITY_INFO, "distance=%f", plane.tdistance_cur);
+            //     gcs().send_text(MAV_SEVERITY_INFO, "chui=%f", plane.tdistance_chui);
+            //     gcs().send_text(MAV_SEVERITY_INFO, "yan=%f", plane.tdistance_yan);
+        }
+
+        //写投水日志
+     //   plane.Log_Write_Throwwater();
+     //   plane.Log_Write_PNL1();
+    }
+
+}
+//开发-->
 
 #if AC_PRECLAND_ENABLED
 void Plane::precland_update(void)

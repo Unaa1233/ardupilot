@@ -104,6 +104,9 @@ enum log_messages {
     LOG_OFG_MSG,
     LOG_TSIT_MSG,
     LOG_TILT_MSG,
+    //<--开发
+    LOG_PNL1_MSG,
+    //开发-->
 };
 
 #define MASK_LOG_ATTITUDE_FAST          (1<<0)

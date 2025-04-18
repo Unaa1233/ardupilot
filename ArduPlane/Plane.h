@@ -29,6 +29,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+//<--开发
+
+
+//开发-->
 #include <AP_HAL/AP_HAL.h>
 #include <AP_Common/AP_Common.h>
 #include <AP_Airspeed/AP_Airspeed.h>
@@ -179,7 +183,18 @@ public:
     Plane(void);
 
 private:
+    //<--开发
 
+    int8_t ttarget_ready = 0; //0：侦察航线，1：投水航线，准备投水
+    int8_t ThroworNot = 0; //0：没有投水，1：已经投水
+
+    Location ttarget{};//飞机最终确定的目标位置（人工测得的(利用g2参数表写入)或者解算出来的（_show））
+    Location ttarget_show{}; //用于储存飞机解算的坐标，_show为实际侦察出的坐标，用于展示侦察效果
+    float tdistance_cur = 0;//预测落点与目标点之间的总距离误差
+    float drop_time;//投放掉落时间
+    float last_distance = 500;//上一次的误差距离，初始化为500，即很远
+
+    //开发-->
     // key aircraft parameters passed to multiple libraries
     AP_FixedWing aparm;
 
@@ -1019,6 +1034,16 @@ private:
 #endif
 
     // ArduPlane.cpp
+    //<--开发
+ 
+    //发送飞机的任务状态信息：是否切航线（ttarget_ready）(由机载电脑发消息确定)，是否投水(ThroworNot)（由检测舵机状态确定）
+    void data_send();
+    void Throwwater();
+ 
+ //   void Log_Write_Throwwater();
+    void Log_Write_PNL1();
+
+    //开发-->
     void disarm_if_autoland_complete();
     bool trigger_land_abort(const float climb_to_alt_m);
     void get_osd_roll_pitch_rad(float &roll, float &pitch) const override;

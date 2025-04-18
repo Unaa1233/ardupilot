@@ -70,6 +70,14 @@ void Plane::init_ardupilot()
     // GPS Initialization
     gps.set_log_gps_bit(MASK_LOG_GPS);
     gps.init();
+    //<--开发
+
+
+
+
+    //开发-->
+
+
 
     init_rc_in();               // sets up rc channels from radio
 

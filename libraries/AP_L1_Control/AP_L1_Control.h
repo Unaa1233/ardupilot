@@ -55,7 +55,25 @@ public:
     void update_heading_hold(int32_t navigation_heading_cd) override;
     void update_level_flight(void) override;
     bool reached_loiter_target(void) override;
-
+ //<--开发
+    AP_Float _K_P;
+    AP_Float _K_D;
+    AP_Int8 nav_pn;
+    AP_Int32 PN_ENABLE;
+    AP_Int32 pn_throwwater_target_lat;
+    AP_Int32 pn_throwwater_target_lng;
+    double _d_Q_1;
+    double _d_Q_2;
+    double _d_Q_3;
+    double _d_d_Q;
+    double _d_d_Q_1;
+    float _latAccDem;
+    float _latAccDem1;
+    uint64_t now_old;
+    long double _d_Q_3_old;
+    Location ttarget{};
+    int8_t ttarget_ready = 1;
+ //开发--> 
     // set the default NAVL1_PERIOD
     void set_default_period(float period) {
         _L1_period.set_default(period);
@@ -84,7 +102,7 @@ private:
 
     // lateral acceration in m/s required to fly to the
     // L1 reference point (+ve to right)
-    float _latAccDem;
+ //   float _latAccDem;
 
     // L1 tracking distance in meters which is dynamically updated
     float _L1_dist;
@@ -111,6 +129,11 @@ private:
 
     // previous value of cross-track velocity
     float _last_Nu;
+
+//<--开发
+    float ret_nav;//roll param based on proportinal navigation guidance law
+    int flag_nav;
+//开发-->
 
     // prevent indecision in waypoint tracking
     void _prevent_indecision(float &Nu);

@@ -1,6 +1,6 @@
 #include <AP_HAL/AP_HAL.h>
 #include "AP_L1_Control.h"
-
+#include <GCS_MAVLink/GCS.h>//开发
 extern const AP_HAL::HAL& hal;
 
 // table of user settable parameters
@@ -37,7 +37,15 @@ const AP_Param::GroupInfo AP_L1_Control::var_info[] = {
     // @Range: 0 89
     // @User: Advanced
     AP_GROUPINFO("LIM_BANK",   3, AP_L1_Control, _loiter_bank_limit, 0.0f),
+ //<--开发
+      AP_GROUPINFO("_K_P",    4, AP_L1_Control, _K_P, 1),
 
+    AP_GROUPINFO("_K_D",    5, AP_L1_Control, _K_D, 1),
+    AP_GROUPINFO("PN_ENABLE",   6, AP_L1_Control, PN_ENABLE, 1),
+    AP_GROUPINFO("PN_LAT",7,AP_L1_Control,pn_throwwater_target_lat,1),
+    AP_GROUPINFO("PN_LNG",8,AP_L1_Control,pn_throwwater_target_lng,1),
+    AP_GROUPINFO("NAV_PN",9,AP_L1_Control,nav_pn,0),
+//开发-->
     AP_GROUPEND
 };
 
@@ -329,13 +337,140 @@ void AP_L1_Control::update_waypoint(const Location &prev_WP, const Location &nex
         Nu = Nu1 + Nu2;
         _nav_bearing = wrap_PI(atan2f(AB.y, AB.x) + Nu1);   // bearing (radians) from AC to L1 point
     }
+//<--开发
+     //Vector2f _groundspeed_vector = _ahrs.groundspeed_vector();
+    //if(-cos(5)<_groundspeed_vector*AB/(AB.length()*_ground_vector.length())<cos(5))
+   // if(next_WP.lat==plane.ttarget.lat&&next_WP.lng==plane.ttarget.lng)
+   // { 
+    flag_nav = 1;
+    Vector2f unit;
+    unit.x = 1;
+    unit.y = 0;
+    Vector2f unit_y;
+    unit_y.x = 0;
+    unit_y.y = 1;
+    //Vector2f AB_1 = prev_WP.get_distance_NE(next_WP);
+    uint64_t now1 = AP_HAL::micros64();
+    //Vector2f A_air_1= prev_WP.get_distance_NE(_current_loc);
+    //_crosstrack_error=A_air_1%AB_1;
+    Vector2f B_air_1 = next_WP.get_distance_NE(_current_loc);
+    float WP_B_dist1 = B_air_1.length();
+    if (WP_B_dist1 < 0.005)
+        WP_B_dist1 = 0.005;
+    //float sine_Q_1=_crosstrack_error/MAX(WP_B_dist1,0.1f);
+    //float Q_1=asinf(sine_Q_1);
+    long double Q, sigma, Q_minus_sigma;
+    if (B_air_1 * unit_y >= 0)
+        Q = acosl((B_air_1 * unit) / WP_B_dist1);
+    else
+        Q = 2 * M_PI - acosl((B_air_1 * unit) / WP_B_dist1);
+    if (_groundspeed_vector * unit_y >= 0)
+        sigma = acosl((_groundspeed_vector * unit) / _groundspeed_vector.length());
+    else
+        sigma = 2 * M_PI - acosl((_groundspeed_vector * unit) / _groundspeed_vector.length());
+    Q_minus_sigma = Q - sigma;
+    _d_Q_1 = _groundspeed_vector.length() * sinl(Q_minus_sigma) / WP_B_dist1;
+    _d_Q_1 = constrain_float(_d_Q_1, -100.0f, 100.0f);
 
+
+    uint64_t now2 = AP_HAL::micros64();
+    //Vector2f A_air_2= prev_WP.get_distance_NE(_current_loc);
+    //_crosstrack_error=A_air_2%AB_1;
+    Vector2f B_air_2 = next_WP.get_distance_NE(_current_loc);
+    float WP_B_dist2 = B_air_2.length();
+    if (WP_B_dist2 < 0.005)
+        WP_B_dist2 = 0.005;
+    //float sine_Q_2=_crosstrack_error/MAX(WP_B_dist2,0.1f);
+    //float Q_2=asinf(sine_Q_2);
+    if (B_air_2 * unit_y >= 0)
+        Q = acosl((B_air_2 * unit) / WP_B_dist2);
+    else
+        Q = 2 * M_PI - acosl((B_air_2 * unit) / WP_B_dist2);
+    if (_groundspeed_vector * unit_y >= 0)
+        sigma = acosl((_groundspeed_vector * unit) / _groundspeed_vector.length());
+    else
+        sigma = 2 * M_PI - acosl((_groundspeed_vector * unit) / _groundspeed_vector.length());
+    Q_minus_sigma = Q - sigma;
+    _d_Q_2 = _groundspeed_vector.length() * sinl(Q_minus_sigma) / WP_B_dist2;
+    _d_Q_2 = constrain_float(_d_Q_2, -100.0f, 100.0f);
+    long double dt1 = (now2 - now1) * 1.0e-6f;
+    long double A = (_d_Q_2 - _d_Q_1) / dt1;
+
+    /*uint64_t now3 = AP_HAL::micros64();
+   // Vector2f A_air_3= prev_WP.get_distance_NE(_current_loc);
+    //_crosstrack_error=A_air_3%AB_1;
+    Vector2f B_air_3=next_WP.get_distance_NE(_current_loc);
+    float WP_B_dist3=B_air_3.length();
+   // float sine_Q_3=_crosstrack_error/MAX(WP_B_dist3,0.1f);
+   // float Q_3=asinf(sine_Q_3);
+    cosine_Q_minus_sigma=(_groundspeed_vector*B_air_3)/(_groundspeed_vector.length()*WP_B_dist3);
+    Q_minus_sigma=acosl(cosine_Q_minus_sigma);
+    _d_Q_3=_groundspeed_vector.length()*sinl(Q_minus_sigma)/B_air_3.length();
+    _d_Q_3 = constrain_float(_d_Q_3, -100.0f, 100.0f);
+    long double dt2=(now3-now2)* 1.0e-6f;
+    long double B=(_d_Q_3-_d_Q_2)/dt2;*/
+
+    uint64_t now3 = AP_HAL::micros64();
+    //Vector2f A_air_4= prev_WP.get_distance_NE(_current_loc);
+   // _crosstrack_error=A_air_4%AB_1;
+    Vector2f B_air_3 = next_WP.get_distance_NE(_current_loc);
+    float WP_B_dist3 = B_air_3.length();
+    if (WP_B_dist3 < 0.005)
+        WP_B_dist3 = 0.005;
+    //  float sine_Q_4=_crosstrack_error/MAX(WP_B_dist4,0.1f);
+     // float Q_4=asinf(sine_Q_4);
+    if (B_air_3 * unit_y >= 0)
+        Q = acosl((B_air_3 * unit) / WP_B_dist3);
+    else
+        Q = 2 * M_PI - acosl((B_air_3 * unit) / WP_B_dist3);
+    if (_groundspeed_vector * unit_y >= 0)
+        sigma = acosl((_groundspeed_vector * unit) / _groundspeed_vector.length());
+    else
+        sigma = 2 * M_PI - acosl((_groundspeed_vector * unit) / _groundspeed_vector.length());
+    Q_minus_sigma = Q - sigma;
+    _d_Q_3 = _groundspeed_vector.length() * sinl(Q_minus_sigma) / WP_B_dist3;
+    _d_Q_3 = constrain_float(_d_Q_3, -100.0f, 100.0f);
+    long double dt2 = (now3 - now2) * 1.0e-6f;
+    long double B = (_d_Q_3 - _d_Q_2) / dt2;
+
+    _d_d_Q = (B + A) / 2;
+    if (abs(_d_Q_3 - _d_Q_3_old) < 1.0e-4)
+    {
+        now_old = now3;
+        _d_Q_3_old = _d_Q_3;
+    }
+    else
+    {
+        long double delta_t = (now3 - now_old) * 1.0e-6f;
+        _d_d_Q_1 = (_d_Q_3 - _d_Q_3_old) / delta_t;
+        _d_Q_3_old = _d_Q_3;
+        now_old = now3;
+    }
+    //     float ret_nav=_K_P*_d_Q_1-_K_D*_d_d_Q;
+    _latAccDem1 = _groundspeed_vector.length();//仅仅记录日志当地速数据用
+    //Plane::Log_Write_PNL1();
+//}
+//开发-->
     _prevent_indecision(Nu);
     _last_Nu = Nu;
 
     //Limit Nu to +-(pi/2)
     Nu = constrain_float(Nu, -1.5708f, +1.5708f);
     _latAccDem = K_L1 * groundSpeed * groundSpeed / _L1_dist * sinf(Nu);
+
+ //<--开发
+    if ((ttarget_ready == 1) && (hypot(ttarget.lat - next_WP.lat, ttarget.lng - next_WP.lng) <= 101) && (PN_ENABLE == 1) && (nav_pn == 0))
+    {
+        _latAccDem = _K_P * _groundspeed_vector.length() * _d_Q_3 + _K_D * _groundspeed_vector.length() * _d_d_Q_1;
+        gcs().send_text(MAV_SEVERITY_INFO, "proportional navigation has been adopted(mavros)");
+    }//需要切完投水航线触发
+    if ((hypot(pn_throwwater_target_lat - next_WP.lat, pn_throwwater_target_lng - next_WP.lng) <= 101) && (PN_ENABLE == 1) && (nav_pn == 2))
+    {
+        _latAccDem = _K_P * _groundspeed_vector.length() * _d_Q_3 + _K_D * _groundspeed_vector.length() * _d_d_Q_1;
+        gcs().send_text(MAV_SEVERITY_INFO, "proportional navigation has been adopted");
+    }//无需切投水航线触发
+ //开发-->
+
 
     // Waypoint capture status is always false during waypoint following
     _WPcircle = false;

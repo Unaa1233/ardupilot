@@ -1191,6 +1191,8 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("RTL_CLIMB_MIN", 27, ParametersG2, rtl_climb_min, 0),
 
+  
+
 #if OFFBOARD_GUIDED == ENABLED
     // @Group: GUIDED_
     // @Path: ../libraries/AC_PID/AC_PID.cpp
@@ -1247,10 +1249,28 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     AP_SUBGROUPINFO(precland, "PLND_", 35, ParametersG2, AC_PrecLand),
 #endif
 
+
+        //<--开发
+      /*throwwater参数，
+  为1时强制投水，不管有没有判断，
+  为2时当测试用，从地面站参数表直接读取靶点gps（不是通过树莓派），且中位启动，不需要树莓派准备好（ready）就能进行投水，
+  为0时是正常的比赛方案，从树莓派读取靶点gps信息，进行后续投水，
+  为3时除了获取gps方式不同（从地面站g2参数表直接获取），其它和比赛方案（0）完全一致，又称线上比赛方案
+      */
+        AP_GROUPINFO("THROWW", 36, ParametersG2, throwwater, 0),
+        AP_GROUPINFO("THROWW_DELAY", 37, ParametersG2, throwwater_delay, 0.0f),//机械延迟
+        AP_GROUPINFO("THROWW_LONG", 38, ParametersG2, throwwater_target_lng, 0),
+        AP_GROUPINFO("THROWW_LAT", 39, ParametersG2, throwwater_target_lat, 0),
+       
+        AP_GROUPINFO("THROWW_RADIUS", 40, ParametersG2, throwwater_judging_radius, 3.0f),
+
+        AP_GROUPINFO("THROWW_RECORD", 41, ParametersG2, throwwater_record, 0),
+        //开发-->
     AP_GROUPEND
 };
 
 ParametersG2::ParametersG2(void) :
+    //此处试着修改开发  unused_integer{1}
     unused_integer{1}
 #if HAL_SOARING_ENABLED
     ,soaring_controller(plane.TECS_controller, plane.aparm)

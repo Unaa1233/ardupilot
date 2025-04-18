@@ -576,6 +576,28 @@ public:
 
     // just to make compilation easier when all things are compiled out...
     uint8_t unused_integer;
+    //<-开发
+
+        /*throwwater参数，
+    为1时强制投水，不管有没有判断，
+    为2时当测试用，从地面站参数表直接读取靶点gps（不是通过树莓派），且中位启动，不需要树莓派准备好（ready）就能进行投水，
+    为0时是正常的比赛方案，从树莓派读取靶点gps信息，进行后续投水，
+    为3时除了获取gps方式不同（从地面站g2参数表直接获取），其它和比赛方案（0）完全一致，又称线上比赛方案
+        */
+    AP_Int8 throwwater;
+    AP_Float throwwater_delay;
+    AP_Int32 throwwater_target_lng;
+    AP_Int32 throwwater_target_lat;
+   
+    AP_Int8 throwwater_judging_radius;
+
+    AP_Int8 throwwater_record;
+
+
+
+
+    //开发-->
+
 };
 
 extern const AP_Param::Info var_info[];

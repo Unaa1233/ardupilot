@@ -1366,9 +1366,26 @@ void GCS_MAVLINK_Plane::handle_set_position_target_global_int(const mavlink_mess
             //don't screw up failsafes
             return;
         }
-
+        
         mavlink_set_position_target_global_int_t pos_target;
-        mavlink_msg_set_position_target_global_int_decode(&msg, &pos_target);
+        mavlink_msg_set_position_target_global_int_decode(&msg, &pos_target);//接受机载电脑发过来的各种信息
+
+
+        //<--开发
+
+
+        plane.ttarget_show.lat = (int32_t)pos_target.lat_int;
+        plane.L1_controller.ttarget.lat = (int32_t)pos_target.lat_int;
+        plane.ttarget_show.lng = (int32_t)pos_target.lon_int;
+        plane.L1_controller.ttarget.lng = (int32_t)pos_target.lon_int;
+        plane.ttarget_ready = (int8_t)pos_target.yaw;//yaw偏航
+        plane.L1_controller.ttarget_ready = (int8_t)pos_target.yaw;
+
+
+
+        //开发-->
+         
+       
         // Unexpectedly, the mask is expecting "ones" for dimensions that should
         // be IGNORNED rather than INCLUDED.  See mavlink documentation of the
         // SET_POSITION_TARGET_GLOBAL_INT message, type_mask field.
