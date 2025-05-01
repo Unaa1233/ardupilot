@@ -1251,7 +1251,7 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
 
 
         //<--开发
-      /*throwwater参数，
+      /*throwwater参数（THROWW），
   为1时强制投水，不管有没有判断，
   为2时当测试用，从地面站参数表直接读取靶点gps（不是通过树莓派），且中位启动，不需要树莓派准备好（ready）就能进行投水，
   为0时是正常的比赛方案，从树莓派读取靶点gps信息，进行后续投水，

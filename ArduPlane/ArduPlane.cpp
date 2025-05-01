@@ -976,8 +976,19 @@ bool Plane::flight_option_enabled(FlightOptions flight_option) const
 //<--开发
 
 //发送飞机的任务状态信息：是否切航线（ttarget_ready）(由机载电脑发消息确定)，是否投水(ThroworNot)（由检测舵机状态确定）
-void Plane::data_send()
-{       //注意将这个地方树莓派里发的yaw值改为1
+void Plane::data_send()  
+{     
+
+   
+
+
+/*
+         gcs().send_text(MAV_SEVERITY_INFO, "Test：distance=%f", plane.tdistance_cur);
+         gcs().send_text(MAV_SEVERITY_INFO, "Test: ttarget_ready = %d", plane.ttarget_ready);//调试使用
+         gcs().send_text(MAV_SEVERITY_INFO, "Test: target_GPS's lat=%ld", plane.ttarget_show.lat);//仿真时是%d，
+         gcs().send_text(MAV_SEVERITY_INFO, "Test: target_GPS's lng=%ld", plane.ttarget_show.lng);
+ */        
+    //注意将这个地方树莓派里发的yaw值改为1
     if (plane.ttarget_ready == 1)     //ttarg_ready为初始化是0，ttarg_ready是一个标志量，标志着飞机是否切换到投水航线，当飞机切到投水航线，机载电脑就会借载体yaw（值为1）（随便找的）发送给飞控，飞控用ttarg_ready接收
     {
         gcs().send_text(MAV_SEVERITY_INFO, "target_GPS has been ready");
@@ -1004,6 +1015,7 @@ void Plane::data_send()
 */
 void Plane::Throwwater()
 {
+   
     //当为测试投水和表演投水时，直接利用人为测得的靶标坐标进行投水，实际比赛时则用飞机测得的坐标投水
     //_show为实际侦察出的坐标，用于展示侦察效果
     if (g2.throwwater == 2 || g2.throwwater == 3)
@@ -1053,7 +1065,16 @@ void Plane::Throwwater()
         distance_current2drop.x = (drop_time + g2.throwwater_delay) * gps.velocity().x;
         distance_current2drop.y = (drop_time + g2.throwwater_delay) * gps.velocity().y;
         //计算位置误差，hypotf（x，y）即计算sqrt（x*x+y*y）
+         //////////////////////////////
+        // gcs().send_text(MAV_SEVERITY_INFO, "Test2：distance_current2target.x = %lf", distance_current2target.x);
+        // gcs().send_text(MAV_SEVERITY_INFO, "Test2：distance_current2target.y = %lf", distance_current2target.y);
+        // gcs().send_text(MAV_SEVERITY_INFO, "Test2：distance_current2drop.x   = %lf", distance_current2drop.x);
+        // gcs().send_text(MAV_SEVERITY_INFO, "Test2：distance_current2drop.y   = %lf", distance_current2drop.y);
+
+
+        /////////////////////////////////
         plane.tdistance_cur = hypotf(distance_current2target.x - distance_current2drop.x, distance_current2target.y - distance_current2drop.y);
+        gcs().send_text(MAV_SEVERITY_INFO, "Test2：distance=%f", plane.tdistance_cur);  //改
         //在误差小于设定值并且飞机以及错过最佳投水时机
         if (plane.tdistance_cur<g2.throwwater_judging_radius && plane.tdistance_cur>plane.last_distance)//此刻的误差比上一刻误差大，上一时刻的误差初始化为500
         {
@@ -1062,6 +1083,7 @@ void Plane::Throwwater()
             SRV_Channels::set_output_pwm_chan(7, 2100);//投水
         }
         plane.last_distance = plane.tdistance_cur;//该程序反复执行，故而更新上一时刻的误差，比较此刻与上一时刻的误差
+    //    gcs().send_text(MAV_SEVERITY_INFO, "Test3：distance=%f", plane.tdistance_cur);  //改
 
         if (g2.throwwater_record == 0 && plane.tdistance_cur < 20)
         {

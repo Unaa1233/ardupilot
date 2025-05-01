@@ -184,7 +184,7 @@ public:
 
 private:
     //<--开发
-
+    //测试############################ttarget_ready=2
     int8_t ttarget_ready = 0; //0：侦察航线，1：投水航线，准备投水
     int8_t ThroworNot = 0; //0：没有投水，1：已经投水
 

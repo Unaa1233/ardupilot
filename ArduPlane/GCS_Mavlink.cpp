@@ -1271,6 +1271,9 @@ void GCS_MAVLINK_Plane::handle_set_attitude_target(const mavlink_message_t &msg)
         // in e.g., RTL, CICLE. Specifying a single mode for companion
         // computer control is more safe (even more so when using
         // FENCE_ACTION = 4 for geofence failures).
+        // mavlink_set_attitude_target_t att_target;
+        // mavlink_msg_set_attitude_target_decode(&msg, &att_target);
+        
         if (plane.control_mode != &plane.mode_guided) { // don't screw up failsafes
             return;
         }
@@ -1337,7 +1340,7 @@ void GCS_MAVLINK_Plane::handle_set_position_target_local_ned(const mavlink_messa
         // decode packet
         mavlink_set_position_target_local_ned_t packet;
         mavlink_msg_set_position_target_local_ned_decode(&msg, &packet);
-
+        
         // exit if vehicle is not in Guided mode
         if (plane.control_mode != &plane.mode_guided) {
             return;
@@ -1362,29 +1365,34 @@ void GCS_MAVLINK_Plane::handle_set_position_target_global_int(const mavlink_mess
         // in modes such as RTL, CIRCLE, etc.  Specifying ONLY one mode
         // for companion computer control is more safe (provided
         // one uses the FENCE_ACTION = 4 (RTL) for geofence failures).
+
+         //<--开发
+        mavlink_set_position_target_global_int_t pos_target;
+        mavlink_msg_set_position_target_global_int_decode(&msg, &pos_target);//接受机载电脑发过来的各种信息
+       
+
+
+         plane.ttarget_show.lat = (int32_t)pos_target.lat_int;
+         plane.L1_controller.ttarget.lat = (int32_t)pos_target.lat_int;
+         plane.ttarget_show.lng = (int32_t)pos_target.lon_int;
+         plane.L1_controller.ttarget.lng = (int32_t)pos_target.lon_int;
+         plane.ttarget_ready = (int8_t)pos_target.alt;//alt高度
+         plane.L1_controller.ttarget_ready = (int8_t)pos_target.alt;
+ 
+ 
+ 
+         //开发-->
+          
         if (plane.control_mode != &plane.mode_guided) {
             //don't screw up failsafes
             return;
         }
         
-        mavlink_set_position_target_global_int_t pos_target;
-        mavlink_msg_set_position_target_global_int_decode(&msg, &pos_target);//接受机载电脑发过来的各种信息
+        // mavlink_set_position_target_global_int_t pos_target;
+        // mavlink_msg_set_position_target_global_int_decode(&msg, &pos_target);//接受机载电脑发过来的各种信息
 
 
-        //<--开发
-
-
-        plane.ttarget_show.lat = (int32_t)pos_target.lat_int;
-        plane.L1_controller.ttarget.lat = (int32_t)pos_target.lat_int;
-        plane.ttarget_show.lng = (int32_t)pos_target.lon_int;
-        plane.L1_controller.ttarget.lng = (int32_t)pos_target.lon_int;
-        plane.ttarget_ready = (int8_t)pos_target.yaw;//yaw偏航
-        plane.L1_controller.ttarget_ready = (int8_t)pos_target.yaw;
-
-
-
-        //开发-->
-         
+       
        
         // Unexpectedly, the mask is expecting "ones" for dimensions that should
         // be IGNORNED rather than INCLUDED.  See mavlink documentation of the
