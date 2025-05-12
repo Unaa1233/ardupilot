@@ -1074,7 +1074,7 @@ void Plane::Throwwater()
 
         /////////////////////////////////
         plane.tdistance_cur = hypotf(distance_current2target.x - distance_current2drop.x, distance_current2target.y - distance_current2drop.y);
-        gcs().send_text(MAV_SEVERITY_INFO, "Test2：distance=%f", plane.tdistance_cur);  //改
+     //   gcs().send_text(MAV_SEVERITY_INFO, "Test2：distance=%f", plane.tdistance_cur);  //改
         //在误差小于设定值并且飞机以及错过最佳投水时机
         if (plane.tdistance_cur<g2.throwwater_judging_radius && plane.tdistance_cur>plane.last_distance)//此刻的误差比上一刻误差大，上一时刻的误差初始化为500
         {
