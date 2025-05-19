@@ -38,9 +38,9 @@ const AP_Param::GroupInfo AP_L1_Control::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("LIM_BANK",   3, AP_L1_Control, _loiter_bank_limit, 0.0f),
  //<--开发
-      AP_GROUPINFO("_K_P",    4, AP_L1_Control, _K_P, 1),
+      AP_GROUPINFO("_K_P",    4, AP_L1_Control, _K_P, -3.2),
 
-    AP_GROUPINFO("_K_D",    5, AP_L1_Control, _K_D, 1),
+    AP_GROUPINFO("_K_D",    5, AP_L1_Control, _K_D, -0.001),
     AP_GROUPINFO("PN_ENABLE",   6, AP_L1_Control, PN_ENABLE, 1),
     AP_GROUPINFO("PN_LAT",7,AP_L1_Control,pn_throwwater_target_lat,1),
     AP_GROUPINFO("PN_LNG",8,AP_L1_Control,pn_throwwater_target_lng,1),

@@ -992,15 +992,15 @@ void Plane::data_send()
     if (plane.ttarget_ready == 1)     //ttarg_ready为初始化是0，ttarg_ready是一个标志量，标志着飞机是否切换到投水航线，当飞机切到投水航线，机载电脑就会借载体yaw（值为1）（随便找的）发送给飞控，飞控用ttarg_ready接收
     {
         gcs().send_text(MAV_SEVERITY_INFO, "target_GPS has been ready");
-        gcs().send_text(MAV_SEVERITY_INFO, "target_GPS's lat=%ld", plane.ttarget_show.lat);//仿真时是%d，
+        gcs().send_text(MAV_SEVERITY_INFO, "target_GPS's lat=%ld", plane.ttarget_show.lat);//仿真时是%d，编译固件为ld
         gcs().send_text(MAV_SEVERITY_INFO, "target_GPS's lng=%ld", plane.ttarget_show.lng);
     }//偏航角(从机载电脑mavros传入的一个参量)为0，（随便在树莓派的mavros找了一个参数（即偏航角）发送给了飞控），飞机侦察到目标靶点，发送飞机测得的靶标坐标
  
     if (plane.ThroworNot == 1)
     {
-        gcs().send_text(MAV_SEVERITY_INFO, "Water has been throw!!!");
-        gcs().send_text(MAV_SEVERITY_INFO, "Water has been throw!!!");
-        gcs().send_text(MAV_SEVERITY_INFO, "Water has been throw!!!");
+        gcs().send_text(MAV_SEVERITY_INFO, "Water has been thrown!!!");
+        gcs().send_text(MAV_SEVERITY_INFO, "Water has been thrown!!!");
+        gcs().send_text(MAV_SEVERITY_INFO, "Water has been thrown!!!");
     }//参数为1时表示投水，通过ThroworNot的值来显示投水信息
 }
 
