@@ -190,6 +190,9 @@ private:
 
     Location ttarget{};//飞机最终确定的目标位置（人工测得的(利用g2参数表写入)或者解算出来的（_show））
     Location ttarget_show{}; //用于储存飞机解算的坐标，_show为实际侦察出的坐标，用于展示侦察效果
+    float tdistance_x = 0; //预测落点与目标点之间的x轴距离误差
+    float tdistance_y = 0; //预测落点与目标点之间的y
+
     float tdistance_cur = 0;//预测落点与目标点之间的总距离误差
     float drop_time;//投放掉落时间
     float last_distance = 500;//上一次的误差距离，初始化为500，即很远

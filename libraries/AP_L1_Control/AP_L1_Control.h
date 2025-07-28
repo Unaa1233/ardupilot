@@ -72,7 +72,7 @@ public:
     uint64_t now_old;
     long double _d_Q_3_old;
     Location ttarget{};
-    int8_t ttarget_ready = 1;
+    int8_t ttarget_ready = 0;//初始化为0，表示侦察航线
  //开发--> 
     // set the default NAVL1_PERIOD
     void set_default_period(float period) {

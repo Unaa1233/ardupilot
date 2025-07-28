@@ -979,9 +979,6 @@ bool Plane::flight_option_enabled(FlightOptions flight_option) const
 void Plane::data_send()  
 {     
 
-   
-
-
 /*
          gcs().send_text(MAV_SEVERITY_INFO, "Test：distance=%f", plane.tdistance_cur);
          gcs().send_text(MAV_SEVERITY_INFO, "Test: ttarget_ready = %d", plane.ttarget_ready);//调试使用
@@ -1049,7 +1046,7 @@ void Plane::Throwwater()
     {
         SRV_Channels::set_output_pwm_chan(6, 2100);
         plane.ThroworNot = 1;
-        SRV_Channels::set_output_pwm_chan(7, 2100);//为何要把八通也置为高位？八通是投水舵机。
+        SRV_Channels::set_output_pwm_chan(7, 2100);//为何要把八通也置为高位？切换手动
     }
     //2025.1.23记录
     else if (plane.ttarget_ready == 1 || g2.throwwater == 2)//中位与自动
@@ -1066,12 +1063,12 @@ void Plane::Throwwater()
         distance_current2drop.y = (drop_time + g2.throwwater_delay) * gps.velocity().y;
         //计算位置误差，hypotf（x，y）即计算sqrt（x*x+y*y）
          //////////////////////////////
-        // gcs().send_text(MAV_SEVERITY_INFO, "Test2：distance_current2target.x = %lf", distance_current2target.x);
+        // gcs().send_text(MAV_SEVERITY_INFO, "Test2：distance_current2target.x = %lf", distance_current2target.x);       
         // gcs().send_text(MAV_SEVERITY_INFO, "Test2：distance_current2target.y = %lf", distance_current2target.y);
         // gcs().send_text(MAV_SEVERITY_INFO, "Test2：distance_current2drop.x   = %lf", distance_current2drop.x);
         // gcs().send_text(MAV_SEVERITY_INFO, "Test2：distance_current2drop.y   = %lf", distance_current2drop.y);
-
-
+        plane.tdistance_x =  distance_current2target.x - distance_current2drop.x;//计算x轴方向的误差
+        plane.tdistance_y =  distance_current2target.y - distance_current2drop.y;//计算y轴方向的误差
         /////////////////////////////////
         plane.tdistance_cur = hypotf(distance_current2target.x - distance_current2drop.x, distance_current2target.y - distance_current2drop.y);
      //   gcs().send_text(MAV_SEVERITY_INFO, "Test2：distance=%f", plane.tdistance_cur);  //改
@@ -1080,16 +1077,16 @@ void Plane::Throwwater()
         {
             SRV_Channels::set_output_pwm_chan(6, 2100);
             plane.ThroworNot = 1;
-            SRV_Channels::set_output_pwm_chan(7, 2100);//投水
+            // SRV_Channels::set_output_pwm_chan(7, 2100);//手动模式
         }
         plane.last_distance = plane.tdistance_cur;//该程序反复执行，故而更新上一时刻的误差，比较此刻与上一时刻的误差
     //    gcs().send_text(MAV_SEVERITY_INFO, "Test3：distance=%f", plane.tdistance_cur);  //改
 
         if (g2.throwwater_record == 0 && plane.tdistance_cur < 20)
         {
-            gcs().send_text(MAV_SEVERITY_INFO, "distance=%f", plane.tdistance_cur);
-            //     gcs().send_text(MAV_SEVERITY_INFO, "chui=%f", plane.tdistance_chui);
-            //     gcs().send_text(MAV_SEVERITY_INFO, "yan=%f", plane.tdistance_yan);
+            gcs().send_text(MAV_SEVERITY_INFO, "Total distance error=%f", plane.tdistance_cur);
+            gcs().send_text(MAV_SEVERITY_INFO, "X-axis direction error=%f", plane.tdistance_x);
+            gcs().send_text(MAV_SEVERITY_INFO, "Y-axis direction error=%f", plane.tdistance_y);
         }
 
         //写投水日志
