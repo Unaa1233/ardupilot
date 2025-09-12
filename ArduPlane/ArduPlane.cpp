@@ -1084,9 +1084,9 @@ void Plane::Throwwater()
 
         if (g2.throwwater_record == 0 && plane.tdistance_cur < 20)
         {
-            gcs().send_text(MAV_SEVERITY_INFO, "Total distance error=%f", plane.tdistance_cur);
-            gcs().send_text(MAV_SEVERITY_INFO, "X-axis direction error=%f", plane.tdistance_x);
-            gcs().send_text(MAV_SEVERITY_INFO, "Y-axis direction error=%f", plane.tdistance_y);
+            gcs().send_text(MAV_SEVERITY_INFO, "---Total distance =  %f ", plane.tdistance_cur);
+            //gcs().send_text(MAV_SEVERITY_INFO, "X-axis direction error=%f", plane.tdistance_x);
+            //gcs().send_text(MAV_SEVERITY_INFO, "Y-axis direction error=%f", plane.tdistance_y);
         }
 
         //写投水日志
